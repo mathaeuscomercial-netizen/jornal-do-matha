@@ -3,8 +3,8 @@ name: Publicar Jornal do Matha
 on:
   workflow_dispatch:
     inputs:
-      conteudo:
-        description: 'Conteúdo completo do briefing'
+      texto:
+        description: 'Texto do Jornal do Matha'
         required: true
         type: string
 
@@ -19,11 +19,33 @@ jobs:
       - name: Abrir a redação
         uses: actions/checkout@v4
 
-      - name: Atualizar briefing
+      - name: Montar edição
         env:
-          CONTEUDO: ${{ inputs.conteudo }}
+          TEXTO: ${{ inputs.texto }}
         run: |
-          printf '%s' "$CONTEUDO" > briefing.json
+          python3 - <<'PY'
+          import json
+          import os
+          import uuid
+          from datetime import datetime, timezone
+
+          texto = os.environ["TEXTO"]
+
+          agora = datetime.now(timezone.utc)
+
+          briefing = [{
+              "uid": f"jornal-do-matha-{uuid.uuid4()}",
+              "updateDate": agora.isoformat(timespec="seconds").replace("+00:00", "Z"),
+              "titleText": "Jornal do Matha",
+              "mainText": texto,
+              "redirectionUrl": "https://mathaeuscomercial-netizen.github.io/jornal-do-matha/"
+          }]
+
+          with open("briefing.json", "w", encoding="utf-8") as arquivo:
+              json.dump(briefing, arquivo, ensure_ascii=False)
+
+          print("Edição montada com sucesso.")
+          PY
 
       - name: Publicar edição
         run: |
