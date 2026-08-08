@@ -1,0 +1,34 @@
+name: Publicar Jornal do Matha
+
+on:
+  workflow_dispatch:
+    inputs:
+      conteudo:
+        description: 'Conteúdo completo do briefing'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Abrir a redação
+        uses: actions/checkout@v4
+
+      - name: Atualizar briefing
+        env:
+          CONTEUDO: ${{ inputs.conteudo }}
+        run: |
+          printf '%s' "$CONTEUDO" > briefing.json
+
+      - name: Publicar edição
+        run: |
+          git config user.name "Redação do Jornal do Matha"
+          git config user.email "actions@github.com"
+          git add briefing.json
+          git commit -m "Publicar nova edição do Jornal do Matha" || exit 0
+          git push
